@@ -1,4 +1,5 @@
 <script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 
 <canvas id="glcanvas" width="640" height="480">
 Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
@@ -18,5 +19,69 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+        // initialize shader
+        var fragmentShader = getShader(gl, '#shader-fs');
+        var vertexShader = getShader(gl, '#shader-vs');
+
+        // create the shader program
+        var shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        // if creating the shader program failed, alert
+        if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert('Unable to initialize the shader program.');
+        }
+
+        gl.useProgram(shaderProgram);
+
+        // activate the new shader program; oh man, we are running the vertex shader?
+        vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+        gl.enableVertexAttribArray(vertexPositionAttribute);
     }
+
+    function getShader(gl, selector) {
+        // helper method that initializes a shader from a DOM element
+        var shader;
+        var source = $(selector).html();
+        var type = $(selector).attr('type');
+
+        if(type == 'x-shader/x-fragment') {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        } else if(type == 'x-shader/x-vertex') {
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        } else {
+            return null;
+        }
+
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            alert('Failed to compile the shader:' + gl.getShaderInfoLog(shader));
+            return null;
+        }
+        return shader;
+    }
+    $(document).on('ready', function() {
+        start();
+    });
+</script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+  void main(void) {
+    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  }
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+  attribute vec3 aVertexPosition;
+
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+  }
 </script>
