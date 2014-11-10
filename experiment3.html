@@ -10,6 +10,7 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
 
 <script type="text/javascript">
     var gl;
+    var squareRotation = 0.0;
 
     function start() {
         var canvas = document.getElementById("glcanvas");
@@ -69,7 +70,7 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
         var squareVerticesColorBuffer = initializeBuffer(gl, colors);
 
         // draw the buffer
-        drawScene(gl);
+        setInterval(function() { drawScene(gl); }, 10);
 
         function drawScene(gl) {
             // this is all still a mystery to me. how do we translate the buffer into something visible?
@@ -84,6 +85,12 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
             // translate to 6 units away from the camera
             mvTranslate([-0.0, 0.0, -6.0]);
 
+            // we need to push the matrix for some reason I don't understand
+            mvPushMatrix();
+
+            // rotates by value around x & z axes; then
+            mvRotate(squareRotation, [1, 0, 1]);
+
             // something to do with the shader programs? no idea what's going on here
             gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
             gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
@@ -95,6 +102,17 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
             // draw the object
             setMatrixUniforms(shaderProgram, perspectiveMatrix);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            // pop the old matrix after drawing... again, don't really understand this
+            mvPopMatrix();
+
+            // update the rotation value
+            var currentTime = (new Date).getTime();
+            if(window.lastSquareUpdateTime) {
+                var delta = currentTime - lastSquareUpdateTime;
+                squareRotation += (30 * delta) / 1000.0;
+            }
+            lastSquareUpdateTime = currentTime;
         }
 
         function initializeBuffer(gl, vertices) {
