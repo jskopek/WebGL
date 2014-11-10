@@ -11,6 +11,12 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
 <script type="text/javascript">
     var gl;
     var squareRotation = 0.0;
+    var squareXOffset = 0.0;
+    var squareYOffset = 0.0;
+    var squareZOffset = 0.0;
+    var xIncValue = 0.2;
+    var yIncValue = -0.4;
+    var zIncValue = 0.3;
 
     function start() {
         var canvas = document.getElementById("glcanvas");
@@ -89,7 +95,10 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
             mvPushMatrix();
 
             // rotates by value around x & z axes; then
-            mvRotate(squareRotation, [1, 0, 1]);
+            mvRotate(squareRotation, [1, 1, 1]);
+
+            // move around
+            mvTranslate([squareXOffset, squareYOffset, squareZOffset]);
 
             // something to do with the shader programs? no idea what's going on here
             gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
@@ -106,11 +115,21 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
             // pop the old matrix after drawing... again, don't really understand this
             mvPopMatrix();
 
-            // update the rotation value
+            // update the rotation and position values
             var currentTime = (new Date).getTime();
             if(window.lastSquareUpdateTime) {
                 var delta = currentTime - lastSquareUpdateTime;
-                squareRotation += (30 * delta) / 1000.0;
+                var delta_modifier = (30 * delta) / 1000.0;
+                squareRotation += delta_modifier
+                squareXOffset += xIncValue * delta_modifier;
+                squareYOffset += yIncValue * delta_modifier;
+                squareZOffset += zIncValue * delta_modifier;
+
+                if(Math.abs(squareYOffset) > 2.5) {
+                    xIncValue = -xIncValue;
+                    yIncValue = -yIncValue;
+                    zIncValue = -zIncValue;
+                }
             }
             lastSquareUpdateTime = currentTime;
         }
