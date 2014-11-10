@@ -1,0 +1,130 @@
+<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://developer.mozilla.org/samples/webgl/sample2/sylvester.js"></script>
+<script src="https://developer.mozilla.org/samples/webgl/sample2/glUtils.js"></script>
+<script src="glAdditionalUtils.js"></script>
+
+<canvas id="glcanvas" width="640" height="480">
+Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
+</canvas>
+
+<script type="text/javascript">
+    var gl;
+
+    function start() {
+        var canvas = document.getElementById("glcanvas");
+        gl = canvas.getContext("webgl");
+        if(!gl) {
+            return false;
+        }
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+        // initialize shader
+        var fragmentShader = getShader(gl, '#shader-fs');
+        var vertexShader = getShader(gl, '#shader-vs');
+
+        // create the shader program
+        var shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        // if creating the shader program failed, alert
+        if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert('Unable to initialize the shader program.');
+        }
+
+        gl.useProgram(shaderProgram);
+
+        // activate the new shader program; oh man, we are running the vertex shader?
+        var vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+
+        // create an array with the coordinates for the square
+        var vertices = [
+            1.0, 1.0, 0.0,
+            -1.0, 1.0, 0.0,
+            1.0, -1.0, 0.0,
+            -1.0, -1.0, 0.0
+        ];
+
+        // set up the buffer and populate it with the vertices
+        initializeBuffer(gl, vertices);
+
+        // draw the buffer
+        drawScene(gl);
+
+        // periodically create random vertices
+        setInterval(function() {
+            return false;
+            var vertices = [
+                Math.random(), Math.random(), 0.0,
+                Math.random(), Math.random(), 0.0,
+                Math.random(), Math.random(), 0.0,
+                Math.random(), Math.random(), 0.0
+            ];
+
+            initializeBuffer(gl, vertices);
+            drawScene(gl);
+        }, 1000);
+
+        function drawScene(gl) {
+            // this is all still a mystery to me. how do we translate the buffer into something visible?
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            // this sets the field of view to 45deg, sets the canvas width/height ratio,
+            // and specifies that we only want objects from 0.1 to 100 units from the camera to be rendered
+            var perspectiveMatrix = makePerspective(45, 640/480.0, 0.1, 100.0);
+
+            loadIdentity();
+
+            // translate to 6 units away from the camera
+            mvTranslate([-0.0, 0.0, -6.0]);
+
+            // osmething to do with the shader programs? no idea what's going on here
+            gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+            setMatrixUniforms(shaderProgram, perspectiveMatrix);
+
+            // draw the object
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+
+        function initializeBuffer(gl, vertices) {
+            var vertices_float = new Float32Array(vertices);
+
+            // create a buffer and bind into the context
+            var buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+            // establish vertices for the buffer
+            gl.bufferData(gl.ARRAY_BUFFER, vertices_float, gl.STATIC_DRAW);
+
+            return buffer;
+        }
+
+    }
+    $(document).on('ready', function() {
+        start();
+    });
+</script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+  void main(void) {
+    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  }
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+  attribute vec3 aVertexPosition;
+
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+  }
+</script>
