@@ -41,7 +41,7 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
         gl.useProgram(shaderProgram);
 
         // activate the new shader program; oh man, we are running the vertex shader?
-        vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+        var vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
         gl.enableVertexAttribArray(vertexPositionAttribute);
 
         // create an array with the coordinates for the square
@@ -60,6 +60,7 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
 
         // periodically create random vertices
         setInterval(function() {
+            return false;
             var vertices = [
                 Math.random(), Math.random(), 0.0,
                 Math.random(), Math.random(), 0.0,
@@ -75,13 +76,20 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
             // this is all still a mystery to me. how do we translate the buffer into something visible?
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+            // this sets the field of view to 45deg, sets the canvas width/height ratio,
+            // and specifies that we only want objects from 0.1 to 100 units from the camera to be rendered
             var perspectiveMatrix = makePerspective(45, 640/480.0, 0.1, 100.0);
 
             loadIdentity();
+
+            // translate to 6 units away from the camera
             mvTranslate([-0.0, 0.0, -6.0]);
 
+            // osmething to do with the shader programs? no idea what's going on here
             gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
             setMatrixUniforms(shaderProgram, perspectiveMatrix);
+
+            // draw the object
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
 
