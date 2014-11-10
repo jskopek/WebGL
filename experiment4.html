@@ -1,0 +1,179 @@
+<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://developer.mozilla.org/samples/webgl/sample2/sylvester.js"></script>
+<script src="https://developer.mozilla.org/samples/webgl/sample2/glUtils.js"></script>
+<script src="glAdditionalUtils.js"></script>
+
+<canvas id="glcanvas" width="640" height="480">
+Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
+</canvas>
+
+<script type="text/javascript">
+    var gl;
+    var squareRotation = 0.0;
+    var squareXOffset = 0.0;
+    var squareYOffset = 0.0;
+    var squareZOffset = 0.0;
+    var xIncValue = 0.2;
+    var yIncValue = -0.4;
+    var zIncValue = 0.3;
+
+    function start() {
+        var canvas = document.getElementById("glcanvas");
+        gl = canvas.getContext("webgl");
+        if(!gl) {
+            return false;
+        }
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+        // initialize shader
+        var fragmentShader = getShader(gl, '#shader-fs');
+        var vertexShader = getShader(gl, '#shader-vs');
+
+        // create the shader program
+        var shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        // if creating the shader program failed, alert
+        if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert('Unable to initialize the shader program.');
+        }
+
+        gl.useProgram(shaderProgram);
+
+        // activate the new shader program; oh man, we are running the vertex shader?
+        var vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+
+        // create an array with the coordinates for the square
+        // and then set up the corresponding buffer
+        var vertices = [
+            1.0, 1.0, 0.0,
+            -1.0, 1.0, 0.0,
+            1.0, -1.0, 0.0,
+            -1.0, -1.0, 0.0
+        ];
+        var squareVerticesBuffer = initializeBuffer(gl, vertices);
+
+        // activate the shader program or something like that for the vertex color; kind of confused here
+        var vertexColorAttribute = gl.getAttribLocation(shaderProgram, 'aVertexColor');
+        gl.enableVertexAttribArray(vertexColorAttribute);
+
+        // set up colors
+        var colors = [
+            1.0, 1.0, 1.0, 1.0, // white
+            1.0, 0.0, 0.0, 1.0, // red
+            0.0, 1.0, 0.0, 1.0, // green
+            0.0, 0.0, 1.0, 1.0  // blue
+        ];
+
+        var squareVerticesColorBuffer = initializeBuffer(gl, colors);
+
+        // draw the buffer
+        setInterval(function() { drawScene(gl); }, 10);
+
+        function drawScene(gl) {
+            // this is all still a mystery to me. how do we translate the buffer into something visible?
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            // this sets the field of view to 45deg, sets the canvas width/height ratio,
+            // and specifies that we only want objects from 0.1 to 100 units from the camera to be rendered
+            var perspectiveMatrix = makePerspective(45, 640/480.0, 0.1, 100.0);
+
+            loadIdentity();
+
+            // translate to 6 units away from the camera
+            mvTranslate([-0.0, 0.0, -6.0]);
+
+            // we need to push the matrix for some reason I don't understand
+            mvPushMatrix();
+
+            // rotates by value around x & z axes; then
+            mvRotate(squareRotation, [1, 1, 1]);
+
+            // move around
+            mvTranslate([squareXOffset, squareYOffset, squareZOffset]);
+
+            // something to do with the shader programs? no idea what's going on here
+            gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
+            gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+
+            // now some color shit? even more confused
+            gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);
+            gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
+
+            // draw the object
+            setMatrixUniforms(shaderProgram, perspectiveMatrix);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            // pop the old matrix after drawing... again, don't really understand this
+            mvPopMatrix();
+
+            // update the rotation and position values
+            var currentTime = (new Date).getTime();
+            if(window.lastSquareUpdateTime) {
+                var delta = currentTime - lastSquareUpdateTime;
+                var delta_modifier = (30 * delta) / 1000.0;
+                squareRotation += delta_modifier
+                squareXOffset += xIncValue * delta_modifier;
+                squareYOffset += yIncValue * delta_modifier;
+                squareZOffset += zIncValue * delta_modifier;
+
+                if(Math.abs(squareYOffset) > 2.5) {
+                    xIncValue = -xIncValue;
+                    yIncValue = -yIncValue;
+                    zIncValue = -zIncValue;
+                }
+            }
+            lastSquareUpdateTime = currentTime;
+        }
+
+        function initializeBuffer(gl, vertices) {
+            var vertices_float = new Float32Array(vertices);
+
+            // create a buffer and bind into the context
+            var buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+            // establish vertices for the buffer
+            gl.bufferData(gl.ARRAY_BUFFER, vertices_float, gl.STATIC_DRAW);
+
+            return buffer;
+        }
+
+    }
+    $(document).on('ready', function() {
+        start();
+    });
+</script>
+
+
+<script id="shader-fs" type="x-shader/x-fragment">
+    // fragment shader seems to be in charge of assigning color for each pixel
+        varying lowp vec4 vColor;
+        
+      void main(void) {
+        gl_FragColor = vColor;
+      }
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+      attribute vec3 aVertexPosition;
+      attribute vec4 aVertexColor;
+    
+      uniform mat4 uMVMatrix;
+      uniform mat4 uPMatrix;
+      
+      varying lowp vec4 vColor;
+    
+      void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        vColor = aVertexColor;
+      }
+</script>
