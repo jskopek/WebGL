@@ -1,5 +1,8 @@
 <script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://developer.mozilla.org/samples/webgl/sample2/sylvester.js"></script>
+<script src="https://developer.mozilla.org/samples/webgl/sample2/glUtils.js"></script>
+<script src="glAdditionalUtils.js"></script>
 
 <canvas id="glcanvas" width="640" height="480">
 Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
@@ -40,29 +43,44 @@ Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
         // activate the new shader program; oh man, we are running the vertex shader?
         vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
         gl.enableVertexAttribArray(vertexPositionAttribute);
-    }
 
-    function getShader(gl, selector) {
-        // helper method that initializes a shader from a DOM element
-        var shader;
-        var source = $(selector).html();
-        var type = $(selector).attr('type');
+        // ----- INITIALIZE BUFFERS -----------
+        // lets set up some buffer shit
+        var horizAspect = 480.0/640.0;
 
-        if(type == 'x-shader/x-fragment') {
-            shader = gl.createShader(gl.FRAGMENT_SHADER);
-        } else if(type == 'x-shader/x-vertex') {
-            shader = gl.createShader(gl.VERTEX_SHADER);
-        } else {
-            return null;
-        }
+        // obtain a buffer and bind into the context
+        squareVerticesBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
 
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            alert('Failed to compile the shader:' + gl.getShaderInfoLog(shader));
-            return null;
-        }
-        return shader;
+        // create an array with the coordinates for the square
+        var vertices = [
+            1.0, 1.0, 0.0,
+            -1.0, 1.0, 0.0,
+            1.0, -1.0, 0.0,
+            -1.0, -1.0, 0.0
+        ];
+
+        // create an array of WebGL floats
+        var vertices_float = new Float32Array(vertices);
+
+        // establish vertices for the object
+        gl.bufferData(gl.ARRAY_BUFFER, vertices_float, gl.STATIC_DRAW);
+        // ----- END INITIALIZE BUFFERS -------
+
+        // ----- DRAW SCENE -------------------
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        var perspectiveMatrix = makePerspective(45, 640/480.0, 0.1, 100.0);
+
+        loadIdentity();
+        mvTranslate([-0.0, 0.0, -6.0]);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
+        gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+        setMatrixUniforms(shaderProgram, perspectiveMatrix);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        // ----- END DRAW SCENE ---------------
+
     }
     $(document).on('ready', function() {
         start();
