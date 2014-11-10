@@ -1,0 +1,22 @@
+<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
+
+<canvas id="glcanvas" width="640" height="480">
+Your browser doesn't appear to support the HTML5 <code>canvas</code> element.
+</canvas>
+
+<script type="text/javascript">
+    var gl;
+
+    function start() {
+        var canvas = document.getElementById("glcanvas");
+        gl = canvas.getContext("webgl");
+        if(!gl) {
+            return false;
+        }
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    }
+</script>
