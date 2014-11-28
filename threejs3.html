@@ -1,0 +1,90 @@
+<head>
+    <title>My first Three.js app</title>
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+<body>
+    <script src="lib/three.min.js"></script>
+    <script src="lib/dat.gui.min.js"></script>
+    <script src="lib/jquery.js"></script>
+    <script src="lib/jquery.event.move.js"></script>
+    <script type="text/javascript">
+        var camera_params = new function() {
+            this.depth = 35;
+            this.z_position = 5;
+
+            this.look_at_x = 0;
+            this.look_at_y = 0;
+            this.look_at_z = 0;
+        }
+
+        var cube_params = new function() {
+            this.rotation_x = 0.01;
+            this.rotation_y = 0.01;
+            this.rotation_z = 0.01;
+            this.rotation_conservation = 0.97;
+        }
+
+        // initialize the parent scene
+        var scene = new THREE.Scene();
+
+        // initialize a camera
+        var camera = new THREE.PerspectiveCamera(camera_params.depth, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = camera_params.z_position;
+        var camera_vector = new THREE.Vector3(0,0,0);
+
+        // initialize a webgl renderer and put it in the document
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // initialize a new cube
+        var geometry = new THREE.BoxGeometry(1,1,1);
+        var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        var cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        // set up new dat.gui instance
+        var gui = new dat.GUI();
+        var f1 = gui.addFolder('Camera');
+        f1.add(camera_params, 'look_at_x', -2, 2).listen()
+        f1.add(camera_params, 'look_at_y', -2, 2).listen()
+        f1.add(camera_params, 'look_at_z', -2, 2).listen()
+        f1.open();
+
+        var f2 = gui.addFolder('Cube');
+        f2.add(cube_params, 'rotation_x', 0, 0.05).listen()
+        f2.add(cube_params, 'rotation_y', 0, 0.05).listen()
+        f2.add(cube_params, 'rotation_z', 0, 0.05).listen()
+        f2.add(cube_params, 'rotation_conservation', 0.95, 1).listen()
+        f2.open();
+
+        // initialize update and render loops
+        function render() {
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+            camera.lookAt(camera_vector)
+        }
+
+        function update() {
+            val = Math.random() * 2 - 1;
+            cube.rotation.y += cube_params.rotation_x;
+            cube.rotation.x += cube_params.rotation_y;
+            cube.rotation.z += cube_params.rotation_z;
+            cube_params.rotation_x *= cube_params.rotation_conservation;
+            cube_params.rotation_y *= cube_params.rotation_conservation;
+            cube_params.rotation_z *= cube_params.rotation_conservation;
+
+            camera_vector.x = camera_params.look_at_x;
+            camera_vector.y = camera_params.look_at_y;
+            camera_vector.z = camera_params.look_at_z;
+        }
+
+
+        // start the update and render loops
+        render();
+        setInterval(update, 1 / 60);
+    </script>
+</body>
