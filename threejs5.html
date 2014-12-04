@@ -74,7 +74,8 @@
             this.rotate_around_y = 15; //scene.position.y;
             this.rotate_around_z = 15; //scene.position.z;
 
-            this.rotation = 0;
+            this.rotation_theta = 0;
+            this.rotation_omega = 0;
             this.distance = 50;
             
             this.update_look_at = function() {
@@ -118,13 +119,21 @@
 
         var camera_controls = gui.addFolder('Camera Controls');
         camera_controls.add(camera_position, 'distance', 0, 80).listen().onChange(update);
-        camera_controls.add(camera_position, 'rotation',0, Math.PI * 2).listen().onChange(update);
+        camera_controls.add(camera_position, 'rotation_theta',0, Math.PI * 2).listen().onChange(update);
+        camera_controls.add(camera_position, 'rotation_omega',0, Math.PI * 2).listen().onChange(update);
         camera_controls.open();
 
         function update() {
-            camera_position.x = camera_position.rotate_around_x + Math.cos(camera_position.rotation) * camera_position.distance;
+            camera_position.x = camera_position.rotate_around_x 
             camera_position.y = camera_position.rotate_around_y
-            camera_position.z = camera_position.rotate_around_x + Math.sin(camera_position.rotation) * camera_position.distance;
+            camera_position.z = camera_position.rotate_around_x 
+
+            //camera_position.x += Math.cos(camera_position.rotation_theta) * camera_position.distance;
+            //camera_position.z += Math.sin(camera_position.rotation_theta) * camera_position.distance;
+
+            camera_position.x += Math.sin(camera_position.rotation_omega) * Math.cos(camera_position.rotation_theta) * camera_position.distance;
+            camera_position.y += Math.sin(camera_position.rotation_omega) * Math.sin(camera_position.rotation_theta) * camera_position.distance;
+            camera_position.z += Math.cos(camera_position.rotation_omega) * camera_position.distance;
         }
 
         // start the update and render loops
