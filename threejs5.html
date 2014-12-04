@@ -64,8 +64,24 @@
             this.x = 0;
             this.y = 9;
             this.z = 50;
+
+            this.look_at = true;
+            this.look_at_x = 15; //scene.position.x;
+            this.look_at_y = 15; //scene.position.y;
+            this.look_at_z = 15; //scene.position.z;
+
+            this.rotate_around_x = 15; //scene.position.x;
+            this.rotate_around_y = 15; //scene.position.y;
+            this.rotate_around_z = 15; //scene.position.z;
+
             this.rotation = 0;
             this.distance = 50;
+            
+            this.update_look_at = function() {
+                this.look_at_x = this.rotate_around_x;
+                this.look_at_y = this.rotate_around_y;
+                this.look_at_z = this.rotate_around_z;
+            }
         }
 
         // initialize update and render loops
@@ -74,7 +90,9 @@
             renderer.render(scene, camera);
 
             camera.position.set(camera_position.x,camera_position.y,camera_position.z);
-            camera.lookAt(scene.position);
+            if(camera_position.look_at) {
+                camera.lookAt(new THREE.Vector3(camera_position.look_at_x, camera_position.look_at_y, camera_position.look_at_z));
+            }
         }
         
         var gui = new dat.GUI();
@@ -84,14 +102,29 @@
         camera_coordinates.add(camera_position, 'z', -40, 40).listen();
         camera_coordinates.open();
 
+        var camera_look = gui.addFolder('Camera Look At');
+        camera_look.add(camera_position, 'look_at').listen();
+        camera_look.add(camera_position, 'look_at_x', -40, 40).listen().onChange(update);
+        camera_look.add(camera_position, 'look_at_y', -40, 40).listen().onChange(update);
+        camera_look.add(camera_position, 'look_at_z', -40, 40).listen().onChange(update);
+        camera_look.open();
+
+        var camera_rotate_around = gui.addFolder('Camera Rotate Around');
+        camera_rotate_around.add(camera_position, 'update_look_at');
+        camera_rotate_around.add(camera_position, 'rotate_around_x', -40, 40).listen().onChange(update);
+        camera_rotate_around.add(camera_position, 'rotate_around_y', -40, 40).listen().onChange(update);
+        camera_rotate_around.add(camera_position, 'rotate_around_z', -40, 40).listen().onChange(update);
+        camera_rotate_around.open();
+
         var camera_controls = gui.addFolder('Camera Controls');
         camera_controls.add(camera_position, 'distance', 0, 80).listen().onChange(update);
         camera_controls.add(camera_position, 'rotation',0, Math.PI * 2).listen().onChange(update);
         camera_controls.open();
 
         function update() {
-            camera_position.x = Math.cos(camera_position.rotation) * camera_position.distance;
-            camera_position.z = Math.sin(camera_position.rotation) * camera_position.distance;
+            camera_position.x = camera_position.rotate_around_x + Math.cos(camera_position.rotation) * camera_position.distance;
+            camera_position.y = camera_position.rotate_around_y
+            camera_position.z = camera_position.rotate_around_x + Math.sin(camera_position.rotation) * camera_position.distance;
         }
 
         // start the update and render loops
