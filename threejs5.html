@@ -131,9 +131,10 @@
             //camera_position.x += Math.cos(camera_position.rotation_theta) * camera_position.distance;
             //camera_position.z += Math.sin(camera_position.rotation_theta) * camera_position.distance;
 
+            // source: http://stackoverflow.com/questions/8426822/rotate-camera-in-three-js-with-mouse
             camera_position.x += Math.sin(camera_position.rotation_omega) * Math.cos(camera_position.rotation_theta) * camera_position.distance;
-            camera_position.y += Math.sin(camera_position.rotation_omega) * Math.sin(camera_position.rotation_theta) * camera_position.distance;
-            camera_position.z += Math.cos(camera_position.rotation_omega) * camera_position.distance;
+            camera_position.y += Math.sin(camera_position.rotation_theta) * camera_position.distance;
+            camera_position.z += Math.cos(camera_position.rotation_omega) * Math.cos(camera_position.rotation_theta) * camera_position.distance;
         }
 
         // start the update and render loops
